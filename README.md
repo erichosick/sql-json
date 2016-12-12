@@ -191,14 +191,14 @@ will log to the console:
 
 ```javascript
 {
-  accounts : [{
+  accounts: [{
     accountId: '961fe224-8943-47fb-b08a-92123d9d7211',
     firstName: 'Candy',
-    lastName: 'Lacy'
+    familyName: 'Lacy'
   }, {
     accountId: 'cb89b50c-65e0-4ed5-a8ed-fb240b3b2830',
     firstName: 'Arnold',
-    lastName: 'Lane'
+    familyName: 'Lane'
   }]
 }
 ```
