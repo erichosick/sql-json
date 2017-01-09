@@ -33,10 +33,34 @@ SqlJson.prototype._replace = function(item, values) {
   return values;
 }
 
+// TODO: Support joins on multiple columns
+// Warning: parent is altered.
+SqlJson.prototype._sqlJsonMergeHierarchy = function(parent, child, join, propName) {
+  if (undefined === parent || null === parent) {
+    return {};
+  } else {
+    if ((undefined === join || null === join || undefined === propName || null === propName)) {
+      return parent;
+    }
+
+    // var parentHash = {};
+    // Note: Had a hash to get O(2N) but situations where O(N^2) is necessary
+    parent.forEach((itemParent) => {
+      itemParent[propName] = [];
+      child.forEach((itemChild) => {
+        if (itemParent[join.parent] === itemChild[join.child]) {
+          itemParent[propName].push(itemChild);
+        }
+      });
+    });
+
+    return parent;
+  }
+}
+
 SqlJson.prototype.toSql = function(context) {
   var json = context.root[context.propName];
-  var type = this._sqlStatementType(context.sql);
-  switch (type) {
+  switch (context.type) {
     case 'insert':
       var valueDefined = context.sql.includes('VALUES') ? 'VALUES' : context.sql.includes('values') ? 'values' : '';
       var sqlsplit = context.sql.split(valueDefined);
@@ -75,18 +99,20 @@ SqlJson.prototype._propContextCreate = function(prop, sqljson, result) {
     root: sqljson,
     propName: this._propNameGet(prop),
     sql: sqljson[prop],
-    result: result
+    result: result,
+    finalSql: undefined,
+    type: undefined
   }
   if (propContext.sql instanceof Object) {
     propContext.sql = propContext.sql.sql;
   }
+  propContext.type = this._sqlStatementType(propContext.sql);
   propContext.finalSql = this.toSql(propContext);
   return propContext;
 }
 
 SqlJson.prototype._runQuery = function(propContext, callback) {
-  var type = this._sqlStatementType(propContext.finalSql);
-  switch (type) {
+  switch (propContext.type) {
     case 'insert':
     case 'delete':
     case 'create':
@@ -102,8 +128,10 @@ SqlJson.prototype._runQuery = function(propContext, callback) {
       });
       break;
     default:
-      // TODO: Add tests and figure out what to return for this
-      console.log(`type was '${type}'`);
+      console.log(`type was '${type}' which we need to implement`);
+      // NOTE: This should never happen so no test was written.
+      //       Could always somehow mock out a test to get this line of code covered
+      callback(`type was '${type}' which we need to implement`, undefined);
       break;
   }
 }
@@ -112,12 +140,28 @@ SqlJson.prototype.run = function(sqljson, callback) {
   if (undefined !== sqljson && null !== sqljson) {
     var properties = this._sqlJsonProperties(sqljson);
     if (properties.length > 0) {
-      var result = {};
+      var result = {}; // result shared between properties.
       properties.forEach((prop, pos) => {
         var propContext = this._propContextCreate(prop, sqljson, result);
-        this._runQuery(propContext, (err, res) => {
-          if (pos === properties.length - 1) {
-            callback(err, res);
+        this._runQuery(propContext, (err, parent) => {
+          if (err) {
+            callback(err, undefined);
+          } else {
+            if (pos === properties.length - 1) {
+              var sqljsonsub = sqljson[prop];
+              var childProperties = this._sqlJsonProperties(sqljsonsub);
+              if (0 < childProperties.length) { // short circuit recursive call
+                this.run(sqljsonsub, (err, child) => {
+                  childProperties.forEach((propChild) => {
+                    var propNameChild = this._propNameGet(propChild);
+                    this._sqlJsonMergeHierarchy(parent[propContext.propName], child[propNameChild], sqljsonsub[propChild].relationship, propNameChild);
+                  });
+                  callback(err, parent);
+                });
+              } else {
+                callback(err, parent);
+              }
+            }
           }
         });
       });

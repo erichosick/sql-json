@@ -322,6 +322,77 @@ becomes:
 }
 ```
 
+### Hierarchical Selects
+
+*SqlJson* supports converting nested *SQL* hierarchies to *JSON*.
+
+```js
+{
+  accountsSql: {
+    sql: `SELECT account_id AS accountId,
+                 first_name AS firstName,
+                 family_name AS familyName
+          FROM account;`,
+    invoicesSql: {
+      sql: `SELECT invoice_id AS invoiceId,
+                   account_id AS accountId,
+                   description
+            FROM invoice`,
+      relationship: {
+        parent: 'accountId',
+        child: 'accountId',
+        type: 'array'
+      }
+    }
+  }
+}
+```
+
+The relationship is defined in the child using the relationship property and following structure:
+
+```js
+{
+  parent: 'accountId',
+  child: 'accountId',
+  type: 'array'
+}
+```
+
+* *Parent* == *Child* - A comparison is done using the parent property name and child property name.
+* type - Expected type of the Parent property children are placed into. By default, this is an array.
+
+Example output:
+
+```js
+{
+  accounts: [{
+    accountId: '961fe224-8943-47fb-b08a-92123d9d7211',
+    firstName: 'Candy',
+    familyName: 'Lacy',
+    invoices: [{
+      invoiceId: 'f91dc9ca-bb9d-4952-85ae-b73ac876de7d',
+      accountId: '961fe224-8943-47fb-b08a-92123d9d7211',
+      description: 'First Invoice'
+    }, {
+      invoiceId: 'ad5e6b4d-623b-46f1-a4ae-ba41d40b5dab',
+      accountId: '961fe224-8943-47fb-b08a-92123d9d7211',
+      description: 'Second Invoice'
+    }]
+  }, {
+    accountId: 'cb89b50c-65e0-4ed5-a8ed-fb240b3b2830',
+    firstName: 'Arnold',
+    familyName: 'Lane',
+    invoices: [{
+      invoiceId: '2d42e427-8f40-47f7-b8d1-dfc1e9ee3237',
+      accountId: 'cb89b50c-65e0-4ed5-a8ed-fb240b3b2830',
+      description: 'Third Invoice'
+    }]
+  }]
+}
+
+```
+
+Notice *invoices* are now properties of accounts.
 
 ## Future Features
 

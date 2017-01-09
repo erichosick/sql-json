@@ -178,6 +178,59 @@ describe("sqljson library", () => {
       PRIMARY KEY(invoice_detail_id)
     );`
 
+  var accountInvoiceHierachy = [{
+    accountId: '961fe224-8943-47fb-b08a-92123d9d7211',
+    firstName: 'Candy',
+    familyName: 'Lacy',
+    invoices: [{
+      invoiceId: 'f91dc9ca-bb9d-4952-85ae-b73ac876de7d',
+      accountId: '961fe224-8943-47fb-b08a-92123d9d7211',
+      description: 'First Invoice'
+    }, {
+      invoiceId: 'ad5e6b4d-623b-46f1-a4ae-ba41d40b5dab',
+      accountId: '961fe224-8943-47fb-b08a-92123d9d7211',
+      description: 'Second Invoice'
+    }]
+  }, {
+    accountId: 'cb89b50c-65e0-4ed5-a8ed-fb240b3b2830',
+    firstName: 'Arnold',
+    familyName: 'Lane',
+    invoices: [{
+      invoiceId: '2d42e427-8f40-47f7-b8d1-dfc1e9ee3237',
+      accountId: 'cb89b50c-65e0-4ed5-a8ed-fb240b3b2830',
+      description: 'Third Invoice'
+    }]
+  }];
+
+  var invoiceAccountHierachy = [{
+    invoiceId: 'f91dc9ca-bb9d-4952-85ae-b73ac876de7d',
+    accountId: '961fe224-8943-47fb-b08a-92123d9d7211',
+    description: 'First Invoice',
+    accounts: [{
+      accountId: '961fe224-8943-47fb-b08a-92123d9d7211',
+      firstName: 'Candy',
+      familyName: 'Lacy'
+    }]
+  }, {
+    invoiceId: 'ad5e6b4d-623b-46f1-a4ae-ba41d40b5dab',
+    accountId: '961fe224-8943-47fb-b08a-92123d9d7211',
+    description: 'Second Invoice',
+    accounts: [{
+      accountId: '961fe224-8943-47fb-b08a-92123d9d7211',
+      firstName: 'Candy',
+      familyName: 'Lacy'
+    }]
+  }, {
+    invoiceId: '2d42e427-8f40-47f7-b8d1-dfc1e9ee3237',
+    accountId: 'cb89b50c-65e0-4ed5-a8ed-fb240b3b2830',
+    description: 'Third Invoice',
+    accounts: [{
+      accountId: 'cb89b50c-65e0-4ed5-a8ed-fb240b3b2830',
+      firstName: 'Arnold',
+      familyName: 'Lane'
+    }]
+  }];
+
   // Begin tests
 
   it("010: should not wipeout Object prototype and be a sqljson", () => {
@@ -221,6 +274,44 @@ describe("sqljson library", () => {
     }), 'should be an empty array').to.eql(['accountsSql', 'invoicesSql']);
   });
 
+  it("035: should create a hierarchy from two jsons.", () => {
+
+    var accountData01 = JSON.parse(JSON.stringify(accountData)); // tests are destructive
+    var invoiceData01 = JSON.parse(JSON.stringify(invoiceData));
+
+    var sqljson = sqljsonlib.sqljson();
+    expect(sqljson._sqlJsonMergeHierarchy(undefined, undefined, undefined, undefined), 'should be empty without parent or association').to.deep.equal({});
+    expect(sqljson._sqlJsonMergeHierarchy(null, null, null, null), 'should be empty without parent or association').to.deep.equal({});
+
+    var selfObject = {
+      self: 1
+    };
+
+    expect(sqljson._sqlJsonMergeHierarchy(selfObject, undefined, undefined, undefined), 'should be return self without association or property').to.deep.equal(selfObject);
+    expect(sqljson._sqlJsonMergeHierarchy(selfObject, null, null, null), 'should be return self without association or property').to.deep.equal(selfObject);
+
+    expect(sqljson._sqlJsonMergeHierarchy(accountData01, invoiceData01, undefined, 'invoices'), 'should be return self without association').to.deep.equal(accountData);
+    expect(sqljson._sqlJsonMergeHierarchy(accountData01, invoiceData01, null, 'invoices'), 'should be return self without association').to.deep.equal(accountData);
+
+    var relationship = {
+      parent: 'accountId',
+      child: 'accountId',
+      type: 'array'
+    };
+    expect(sqljson._sqlJsonMergeHierarchy(accountData01, invoiceData01, relationship, undefined), 'should be empty without any property').to.deep.equal(accountData);
+    expect(sqljson._sqlJsonMergeHierarchy(accountData01, invoiceData01, relationship, null), 'should be empty without any property').to.deep.equal(accountData);
+
+    var mergeResult = sqljson._sqlJsonMergeHierarchy(accountData01, invoiceData01, relationship, 'invoices');
+    expect(mergeResult, 'should return an account/invoice hierarchy').to.deep.equal(accountInvoiceHierachy);
+
+    var accountData02 = JSON.parse(JSON.stringify(accountData)); // tests are destructive
+    var invoiceData02 = JSON.parse(JSON.stringify(invoiceData));
+    var mergeResult = sqljson._sqlJsonMergeHierarchy(invoiceData02, accountData02, relationship, 'accounts');
+    expect(mergeResult, 'should return an invoice/account hierarchy').to.deep.equal(invoiceAccountHierachy);
+
+    // TODO: Test cases where there is an invalid relationship.
+  });
+
   it(`040: should return correct results when nothing to convert`, (done) => {
     var repoSqlite3 = sqljsonlib.repoSqlite3({
       afterOpen: () => {
@@ -233,12 +324,10 @@ describe("sqljson library", () => {
             expect(res, 'result shold be undefined').to.be.undefined;
             sqljson.run({}, (err, res) => {
               expect(err, 'error shold be undefined').to.be.undefined;
-              expect(res, 'result shold be empty object').to.be.empty;
-              expect(res, "result should be an object").to.be.an("object");
+              expect(res, "result should be an array").to.deep.equal({});
               sqljson.run([], (err, res) => {
                 expect(err, 'error shold be undefined').to.be.undefined;
-                expect(res, 'result shold be empty array').to.be.empty;
-                expect(res, "result should be an array").to.be.an("array");
+                expect(res, "result should be an array").to.deep.equal([]);
                 sqljson.run(5, (err, res) => {
                   expect(err, 'error shold be undefined').to.be.undefined;
                   expect(res, 'result shold be the same number').to.equal(5);
@@ -256,12 +345,15 @@ describe("sqljson library", () => {
     });
     repoSqlite3.open;
   });
+
   it(`050: should create a repository and call afterOpen,
           then sqljson should create a table,
           then sqljson should instert data into that table,
           then sqljson should read the data from that table,
           then sqljson should delete a record from the table,
           then sqljson should read again from the table.`, (done) => {
+
+    var accountData01 = JSON.parse(JSON.stringify(accountData)); // tests could be destructive
 
     var repoSqlite3 = sqljsonlib.repoSqlite3({
       afterOpen: () => {
@@ -273,16 +365,16 @@ describe("sqljson library", () => {
             expect(err, 'should have no error').to.be.undefined;
             sqljson.run(accountSelectJsonSql01, (err, res) => {
               expect(err, 'should have no error').to.be.undefined;
-              expect(res.accounts.length, 'should have two items').to.equal(2);
-              expect(res.accounts[0].accountId, 'should have correct accountId').to.equal('961fe224-8943-47fb-b08a-92123d9d7211');
-              expect(res.accounts[0].firstName, 'should have correct firstName').to.equal('Candy');
+              expect(res, 'should return correct json').to.deep.equal({
+                accounts: accountData01
+              });
               sqljson.run(accountDeleteJsonSql01, (err, res) => {
                 expect(err, 'should have no error').to.be.undefined;
                 sqljson.run(accountSelectJsonSql01, (err, res) => {
                   expect(err, 'should have no error').to.be.undefined;
-                  expect(res.accounts.length, 'should have one item').to.equal(1);
-                  expect(res.accounts[0].accountId, 'should have correct accountId').to.equal('cb89b50c-65e0-4ed5-a8ed-fb240b3b2830');
-                  expect(res.accounts[0].firstName, 'should have correct firstName').to.equal('Arnold');
+                  expect(res, 'should return correct json').to.deep.equal({
+                    accounts: [accountData01[1]]
+                  });
                   done();
                 });
               });
@@ -296,26 +388,32 @@ describe("sqljson library", () => {
 
   it(`060: should support variable names in create, and delete statements`, (done) => {
 
+    var accountData01 = JSON.parse(JSON.stringify(accountData)); // tests could be destructive
+
     var repoSqlite3 = sqljsonlib.repoSqlite3({
       afterOpen: () => {
         var sqljson = sqljsonlib.sqljson(repoSqlite3);
 
         sqljson.run(accountTableCreateJsonSql02, (err, res) => {
           expect(err, 'should have no error').to.be.undefined;
+          // TODO: May want something else to return>
+          expect(res, 'should return empty object.').to.deep.equal({});
           sqljson.run(accountInsertJsonSql01, (err, res) => {
             expect(err, 'should have no error').to.be.undefined;
+            // TODO: May want something else to return>
+            expect(res, 'should return empty object.').to.deep.equal({});
             sqljson.run(accountsSelectJsonSql02, (err, res) => {
               expect(err, 'should have no error').to.be.undefined;
-              expect(res.accounts.length, 'should have two items').to.equal(2);
-              expect(res.accounts[0].accountId, 'should have correct accountId').to.equal('961fe224-8943-47fb-b08a-92123d9d7211');
-              expect(res.accounts[0].firstName, 'should have correct firstName').to.equal('Candy');
+              expect(res, 'should return correct json').to.deep.equal({
+                accounts: accountData01
+              });
               sqljson.run(accountsDeleteJsonSql02, (err, res) => {
                 expect(err, 'should have no error').to.be.undefined;
                 sqljson.run(accountSelectJsonSql01, (err, res) => {
                   expect(err, 'should have no error').to.be.undefined;
-                  expect(res.accounts.length, 'should have two items').to.equal(1);
-                  expect(res.accounts[0].accountId, 'should have correct accountId').to.equal('cb89b50c-65e0-4ed5-a8ed-fb240b3b2830');
-                  expect(res.accounts[0].firstName, 'should have correct firstName').to.equal('Arnold');
+                  expect(res, 'should return correct json').to.deep.equal({
+                    accounts: [accountData01[1]]
+                  });
                   done();
                 });
               });
@@ -329,9 +427,12 @@ describe("sqljson library", () => {
 
   it(`070: should support more than one sql query at the same object level`, (done) => {
 
+    var accountData01 = JSON.parse(JSON.stringify(accountData)); // tests could be destructive
+    var invoiceData01 = JSON.parse(JSON.stringify(invoiceData)); // tests could be destructive
+
     var selectsAtSameLevelSqlJson = {
-      accountsSql: accountSelectSql,
-      invoicesSql: invoiceSelectSql
+      accountsSql: JSON.parse(JSON.stringify(accountSelectSql)),
+      invoicesSql: JSON.parse(JSON.stringify(invoiceSelectSql))
     };
 
     var repoSqlite3 = sqljsonlib.repoSqlite3({
@@ -348,12 +449,10 @@ describe("sqljson library", () => {
                 expect(err, 'should have no error').to.be.undefined;
                 sqljson.run(selectsAtSameLevelSqlJson, (err, res) => {
                   expect(err, 'should have no error').to.be.undefined;
-                  expect(res['invoices'], "Should have invoices").to.be.an("array");
-                  expect(res['invoices'].length, "Should have 3 invoices").to.equal(3);
-                  expect(res['accounts'], "Should have accounts").to.be.an("array");
-                  expect(res['accounts'].length, "Should have 2 accounts").to.equal(2);
-                  expect(res['invoicesSql'], "Should not contain sql").to.be.undefined;
-                  expect(res['accountsSql'], "Should not contain sql").to.be.undefined;
+                  expect(res, 'should return correct json').to.deep.equal({
+                    accounts: accountData01,
+                    invoices: invoiceData01
+                  });
                   expect(selectsAtSameLevelSqlJson['accountsSql'], "Original statement should not change").to.be.a("string");
                   expect(selectsAtSameLevelSqlJson['invoicesSql'], "Original statement should not change").to.be.a("string");
                   done();
@@ -367,57 +466,90 @@ describe("sqljson library", () => {
     repoSqlite3.open;
   });
 
-  // it(`XXX: should support conversion of one-to-many SQL relationships to hierarchial JSON`, (done) => {
+  it(`080: should fail nicely when an invalid sql statement is ran
+             and there is more than one sql query at the same object level`, (done) => {
 
-  //   var accountsHierarchySelectJsonSql01 = {
-  //     accountsSql: {
-  //       sql: `
-  //         SELECT
-  //         account_id AS accountId,
-  //         first_name AS firstName,
-  //         family_name AS familyName
-  //       FROM account;
-  //       `,
-  //       invoicesSql: {
-  //         sql: `
-  //           SELECT
-  //             invoice_id AS invoiceId,
-  //             account_id AS accountId,
-  //             description
-  //           FROM invoice
-  //           INNER JOIN account ON account_id = invoice.invoice_id;`
-  //       }
-  //     },
-  //     accounts: []
-  //   };
+    var selectsAtSameLevelSqlJson = {
+      accountsSql: `SELECT * FROM NoSuchTable`,
+      invoicesSql: invoiceSelectSql
+    };
 
-  //   var repoSqlite3 = sqljsonlib.repoSqlite3({
-  //     afterOpen: () => {
-  //       var sqljson = sqljsonlib.sqljson(repoSqlite3);
+    var repoSqlite3 = sqljsonlib.repoSqlite3({
+      afterOpen: () => {
+        var sqljson = sqljsonlib.sqljson(repoSqlite3);
 
-  //       sqljson.run(accountTableCreateJsonSql01, (err, res) => {
-  //         expect(err, 'should have no error').to.be.undefined;
-  //         sqljson.run(invoiceTableCreateJsonSql01, (err, res) => {
-  //           expect(err, 'should have no error').to.be.undefined;
-  //           sqljson.run(accountInsertJsonSql01, (err, res) => {
-  //             expect(err, 'should have no error').to.be.undefined;
-  //             sqljson.run(invoiceInsertJsonSql01, (err, res) => {
-  //               expect(err, 'should have no error').to.be.undefined;
-  //               sqljson.run(accountsHierarchySelectJsonSql01, (err, res) => {
-  //                 // console.log(res);
-  //                 //           expect(err, 'should have no error').to.be.undefined;
-  //                 //           expect(res.accounts.length, 'should have two items').to.equal(1);
-  //                 //           expect(res.accounts[0].accountId, 'should have correct accountId').to.equal('cb89b50c-65e0-4ed5-a8ed-fb240b3b2830');
-  //                 //           expect(res.accounts[0].firstName, 'should have correct firstName').to.equal('Arnold');
-  //                 done();
-  //               });
-  //             });
-  //           });
-  //         });
-  //       });
-  //     }
-  //   });
-  //   repoSqlite3.open;
-  // });
+        sqljson.run(accountTableCreateJsonSql01, (err, res) => {
+          expect(err, 'should have no error').to.be.undefined;
+          sqljson.run(accountInsertJsonSql01, (err, res) => {
+            expect(err, 'should have no error').to.be.undefined;
+            sqljson.run(invoiceTableCreateJsonSql01, (err, res) => {
+              expect(err, 'should have no error').to.be.undefined;
+              sqljson.run(invoiceInsertJsonSql01, (err, res) => {
+                expect(err, 'should have no error').to.be.undefined;
+                sqljson.run(selectsAtSameLevelSqlJson, (err, res) => {
+                  expect(err, 'should have an error').to.be.not.undefined;
+                  expect(res, 'should have no result').to.be.undefined;
+                  done();
+                });
+              });
+            });
+          });
+        });
+      }
+    });
+    repoSqlite3.open;
+  });
+
+  it(`090: should support conversion of one-to-many SQL relationships to hierarchial JSON`, (done) => {
+
+    var accountsHierarchySelectJsonSql01 = {
+      accountsSql: {
+        sql: `SELECT
+                account_id AS accountId,
+                first_name AS firstName,
+                family_name AS familyName
+              FROM account;`,
+        invoicesSql: {
+          sql: `SELECT
+                  invoice_id AS invoiceId,
+                  account_id AS accountId,
+                  description
+                FROM invoice;`,
+          relationship: {
+            parent: 'accountId',
+            child: 'accountId',
+            type: 'array'
+          }
+        }
+      }
+    };
+
+    var repoSqlite3 = sqljsonlib.repoSqlite3({
+      afterOpen: () => {
+        var sqljson = sqljsonlib.sqljson(repoSqlite3);
+
+        sqljson.run(accountTableCreateJsonSql01, (err, res) => {
+          expect(err, 'should have no error 1').to.be.undefined;
+          sqljson.run(invoiceTableCreateJsonSql01, (err, res) => {
+            expect(err, 'should have no error 2').to.be.undefined;
+            sqljson.run(accountInsertJsonSql01, (err, res) => {
+              expect(err, 'should have no error 3').to.be.undefined;
+              sqljson.run(invoiceInsertJsonSql01, (err, res) => {
+                expect(err, 'should have no error 4').to.be.undefined;
+                sqljson.run(accountsHierarchySelectJsonSql01, (err, res) => {
+                  expect(err, 'should have no error 5').to.be.undefined;
+                  expect(res, 'should return an account/invoice hierarchy').to.deep.equal({
+                    accounts: accountInvoiceHierachy
+                  });
+                  done();
+                });
+              });
+            });
+          });
+        });
+      }
+    });
+    repoSqlite3.open;
+  });
 
 });
