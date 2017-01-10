@@ -1,5 +1,5 @@
 function sqljson(repo) {
-  var f = Object.create(SqlJson.prototype);
+  const f = Object.create(SqlJson.prototype);
   f.repo = repo;
   return f;
 }
@@ -8,7 +8,7 @@ function SqlJson() {}
 SqlJson.prototype = Object.create(Object.prototype, {});
 
 SqlJson.prototype._sqlStatementType = function(sql) {
-  var sqlLower = sql.toLowerCase();
+  const sqlLower = sql.toLowerCase();
   return sqlLower.includes('select') ? 'select' :
     sqlLower.includes('update') ? 'update' :
     sqlLower.includes('values') ? 'insert' :
@@ -20,10 +20,10 @@ SqlJson.prototype._sqlStatementType = function(sql) {
 SqlJson.prototype._replace = function(item, values) {
   if (undefined !== item) {
     Object.keys(item).forEach((prop) => {
-      var search = `@${prop}@`;
-      var replacement = typeof item[prop] === 'string' ? `"${item[prop]}"` : item[prop];
+      const search = `:${prop}`;
+      const replacement = typeof item[prop] === 'string' ? `"${item[prop]}"` : item[prop];
       if (item[prop] instanceof Array) {
-        var replacement2 = JSON.stringify(item[prop]).replace('[', '').replace(']', '');
+        const replacement2 = JSON.stringify(item[prop]).replace('[', '').replace(']', '');
         values = values.split(search).join(replacement2);
       } else {
         values = values.split(search).join(replacement);
@@ -43,7 +43,6 @@ SqlJson.prototype._sqlJsonMergeHierarchy = function(parent, child, join, propNam
       return parent;
     }
 
-    // var parentHash = {};
     // Note: Had a hash to get O(2N) but situations where O(N^2) is necessary
     parent.forEach((itemParent) => {
       itemParent[propName] = [];
@@ -59,13 +58,13 @@ SqlJson.prototype._sqlJsonMergeHierarchy = function(parent, child, join, propNam
 }
 
 SqlJson.prototype.toSql = function(context) {
-  var json = context.root[context.propName];
+  const json = context.root[context.propName];
   switch (context.type) {
     case 'insert':
-      var valueDefined = context.sql.includes('VALUES') ? 'VALUES' : context.sql.includes('values') ? 'values' : '';
-      var sqlsplit = context.sql.split(valueDefined);
-      var result = sqlsplit[0] + valueDefined;
-      var repeat = sqlsplit[1].trim().replace(';', '');
+      const valueDefined = context.sql.includes('VALUES') ? 'VALUES' : context.sql.includes('values') ? 'values' : '';
+      const sqlsplit = context.sql.split(valueDefined);
+      let result = sqlsplit[0] + valueDefined;
+      const repeat = sqlsplit[1].trim().replace(';', '');
       json.forEach((item) => {
         result = result + "\n" + this._replace(item, repeat) + ",";
       });
@@ -94,7 +93,7 @@ SqlJson.prototype._sqlJsonProperties = function(sqljson) {
 }
 
 SqlJson.prototype._propContextCreate = function(prop, sqljson, result) {
-  var propContext = {
+  const propContext = {
     prop: prop,
     root: sqljson,
     propName: this._propNameGet(prop),
@@ -138,22 +137,22 @@ SqlJson.prototype._runQuery = function(propContext, callback) {
 
 SqlJson.prototype.run = function(sqljson, callback) {
   if (undefined !== sqljson && null !== sqljson) {
-    var properties = this._sqlJsonProperties(sqljson);
+    const properties = this._sqlJsonProperties(sqljson);
     if (properties.length > 0) {
-      var result = {}; // result shared between properties.
+      const result = {}; // result shared between properties.
       properties.forEach((prop, pos) => {
-        var propContext = this._propContextCreate(prop, sqljson, result);
+        const propContext = this._propContextCreate(prop, sqljson, result);
         this._runQuery(propContext, (err, parent) => {
           if (err) {
             callback(err, undefined);
           } else {
             if (pos === properties.length - 1) {
-              var sqljsonsub = sqljson[prop];
-              var childProperties = this._sqlJsonProperties(sqljsonsub);
+              const sqljsonsub = sqljson[prop];
+              const childProperties = this._sqlJsonProperties(sqljsonsub);
               if (0 < childProperties.length) { // short circuit recursive call
                 this.run(sqljsonsub, (err, child) => {
                   childProperties.forEach((propChild) => {
-                    var propNameChild = this._propNameGet(propChild);
+                    const propNameChild = this._propNameGet(propChild);
                     this._sqlJsonMergeHierarchy(parent[propContext.propName], child[propNameChild], sqljsonsub[propChild].relationship, propNameChild);
                   });
                   callback(err, parent);

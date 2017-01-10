@@ -4,7 +4,7 @@ describe("sqljson library", () => {
 
   // Account test data
 
-  var accountData = [{
+  const accountData = [{
     accountId: '961fe224-8943-47fb-b08a-92123d9d7211',
     firstName: 'Candy',
     familyName: 'Lacy'
@@ -14,7 +14,7 @@ describe("sqljson library", () => {
     familyName: 'Lane'
   }];
 
-  var accountTableCreateJsonSql01 = {
+  const accountTableCreateJsonSql01 = {
     Sql: `
     CREATE TABLE account (
         account_id CHAR(36) NOT NULL,
@@ -24,65 +24,65 @@ describe("sqljson library", () => {
     );`
   };
 
-  var accountTableCreateJsonSql02 = {
+  const accountTableCreateJsonSql02 = {
     tableDataSql: `
       CREATE TABLE account (
        account_id CHAR(36) NOT NULL,
-       first_name VARCHAR(@nameSize@) NOT NULL,
-       family_name VARHCAR(@nameSize@) NOT NULL,
+       first_name VARCHAR(:nameSize) NOT NULL,
+       family_name VARHCAR(:nameSize) NOT NULL,
        PRIMARY KEY(account_id)
      );`,
     nameSize: 80
   };
 
-  var accountSelectSql = `
+  const accountSelectSql = `
       SELECT
         account_id AS accountId,
         first_name AS firstName,
         family_name AS familyName
       FROM account;`;
 
-  var accountSelectJsonSql01 = {
+  const accountSelectJsonSql01 = {
     accountsSql: accountSelectSql,
     accounts: []
   };
 
   // OR so we can do replace multiple variables with the same name
-  var accountsSelectJsonSql02 = {
+  const accountsSelectJsonSql02 = {
     accountsSql: `SELECT account_id AS accountId,
                          first_name AS firstName,
                          family_name AS familyName
                   FROM account
-                  WHERE account_id IN (@accountIds@)
-                  OR account_id IN (@accountIds@);`,
+                  WHERE account_id IN (:accountIds)
+                  OR account_id IN (:accountIds);`,
     accountIds: ['961fe224-8943-47fb-b08a-92123d9d7211', 'cb89b50c-65e0-4ed5-a8ed-fb240b3b2830'],
     accounts: []
   };
 
-  var accountInsertJsonSql01 = {
+  const accountInsertJsonSql01 = {
     accountsSql: `INSERT INTO account(account_id, first_name, family_name) VALUES
-                    (@accountId@, @firstName@, @familyName@);`,
+                    (:accountId, :firstName, :familyName);`,
     accounts: accountData
   };
 
-  var accountDeleteJsonSql01 = {
+  const accountDeleteJsonSql01 = {
     accountsSql: `
       DELETE
       FROM account
       WHERE account_id = '961fe224-8943-47fb-b08a-92123d9d7211';`
   };
 
-  var accountsDeleteJsonSql02 = {
+  const accountsDeleteJsonSql02 = {
     accountsSql: `
       DELETE
       FROM account
-      WHERE account_id = @accountId@;`,
+      WHERE account_id = :accountId;`,
     accountId: '961fe224-8943-47fb-b08a-92123d9d7211'
   };
 
   // Invoice test data
 
-  var invoiceData = [{
+  const invoiceData = [{
     invoiceId: 'f91dc9ca-bb9d-4952-85ae-b73ac876de7d',
     accountId: '961fe224-8943-47fb-b08a-92123d9d7211',
     description: 'First Invoice'
@@ -96,7 +96,7 @@ describe("sqljson library", () => {
     description: 'Third Invoice'
   }];
 
-  var invoiceTableCreateJsonSql01 = {
+  const invoiceTableCreateJsonSql01 = {
     invoiceSql: {
       sql: `
         CREATE TABLE invoice (
@@ -108,29 +108,29 @@ describe("sqljson library", () => {
     }
   };
 
-  var invoiceInsertJsonSql01 = {
+  const invoiceInsertJsonSql01 = {
     invoicesSql: {
       sql: `INSERT INTO invoice(invoice_id, account_id, description) VALUES
-                  (@invoiceId@, @accountId@, @description@);`
+                  (:invoiceId, :accountId, :description);`
     },
     invoices: invoiceData
   };
 
-  var invoiceSelectSql = `
+  const invoiceSelectSql = `
     SELECT
       invoice_id AS invoiceId,
       account_id AS accountId,
       description
     FROM invoice;`;
 
-  var invoiceSelectJsonSql01 = {
+  const invoiceSelectJsonSql01 = {
     invoicesSql: invoiceSelectSql,
     invoices: []
   };
 
   // Invoice Detail
 
-  var invoiceDetailData = [{
+  const invoiceDetailData = [{
     invoiceDetailId: '17b917e0-49df-4929-ab1d-71a8f7c01f60',
     invoiceId: 'f91dc9ca-bb9d-4952-85ae-b73ac876de7d',
     productDescription: 'Some Book',
@@ -168,7 +168,7 @@ describe("sqljson library", () => {
     basePrice: 22.43
   }];
 
-  var invoiceDetailTableSql = `
+  const invoiceDetailTableSql = `
     CREATE TABLE invoice_detail (
       invoice_detail_id CHAR(36) NOT NULL,
       invoice_id CHAR(36) NOT NULL,
@@ -178,7 +178,7 @@ describe("sqljson library", () => {
       PRIMARY KEY(invoice_detail_id)
     );`
 
-  var accountInvoiceHierachy = [{
+  const accountInvoiceHierachy = [{
     accountId: '961fe224-8943-47fb-b08a-92123d9d7211',
     firstName: 'Candy',
     familyName: 'Lacy',
@@ -202,7 +202,7 @@ describe("sqljson library", () => {
     }]
   }];
 
-  var invoiceAccountHierachy = [{
+  const invoiceAccountHierachy = [{
     invoiceId: 'f91dc9ca-bb9d-4952-85ae-b73ac876de7d',
     accountId: '961fe224-8943-47fb-b08a-92123d9d7211',
     description: 'First Invoice',
@@ -234,12 +234,12 @@ describe("sqljson library", () => {
   // Begin tests
 
   it("010: should not wipeout Object prototype and be a sqljson", () => {
-    var sqljson = sqljsonlib.sqljson();
+    const sqljson = sqljsonlib.sqljson();
     expect(sqljson, "sqljson").to.be.an("object");
   });
 
   it("020: should determine correct type of sql statement.", () => {
-    var sqljson = sqljsonlib.sqljson();
+    const sqljson = sqljsonlib.sqljson();
     expect(sqljson._sqlStatementType('select * from user;'), 'should be a select statement').to.equal('select');
     expect(sqljson._sqlStatementType('SELECT * from user;'), 'should be a select statement').to.equal('select');
     expect(sqljson._sqlStatementType('update user set name = 5;'), 'should be an update statement').to.equal('update');
@@ -258,7 +258,7 @@ describe("sqljson library", () => {
   });
 
   it("030: should find all sqlJson properties.", () => {
-    var sqljson = sqljsonlib.sqljson();
+    const sqljson = sqljsonlib.sqljson();
     expect(sqljson._sqlJsonProperties(undefined), 'should be an empty array').to.be.empty;
     expect(sqljson._sqlJsonProperties(null), 'should be an empty array').to.be.empty;
     expect(sqljson._sqlJsonProperties({}), 'should be an empty object').to.be.empty;
@@ -276,14 +276,14 @@ describe("sqljson library", () => {
 
   it("035: should create a hierarchy from two jsons.", () => {
 
-    var accountData01 = JSON.parse(JSON.stringify(accountData)); // tests are destructive
-    var invoiceData01 = JSON.parse(JSON.stringify(invoiceData));
+    const accountData01 = JSON.parse(JSON.stringify(accountData)); // tests are destructive
+    const invoiceData01 = JSON.parse(JSON.stringify(invoiceData));
 
-    var sqljson = sqljsonlib.sqljson();
+    const sqljson = sqljsonlib.sqljson();
     expect(sqljson._sqlJsonMergeHierarchy(undefined, undefined, undefined, undefined), 'should be empty without parent or association').to.deep.equal({});
     expect(sqljson._sqlJsonMergeHierarchy(null, null, null, null), 'should be empty without parent or association').to.deep.equal({});
 
-    var selfObject = {
+    const selfObject = {
       self: 1
     };
 
@@ -293,7 +293,7 @@ describe("sqljson library", () => {
     expect(sqljson._sqlJsonMergeHierarchy(accountData01, invoiceData01, undefined, 'invoices'), 'should be return self without association').to.deep.equal(accountData);
     expect(sqljson._sqlJsonMergeHierarchy(accountData01, invoiceData01, null, 'invoices'), 'should be return self without association').to.deep.equal(accountData);
 
-    var relationship = {
+    const relationship = {
       parent: 'accountId',
       child: 'accountId',
       type: 'array'
@@ -301,21 +301,23 @@ describe("sqljson library", () => {
     expect(sqljson._sqlJsonMergeHierarchy(accountData01, invoiceData01, relationship, undefined), 'should be empty without any property').to.deep.equal(accountData);
     expect(sqljson._sqlJsonMergeHierarchy(accountData01, invoiceData01, relationship, null), 'should be empty without any property').to.deep.equal(accountData);
 
-    var mergeResult = sqljson._sqlJsonMergeHierarchy(accountData01, invoiceData01, relationship, 'invoices');
+    const mergeResult = sqljson._sqlJsonMergeHierarchy(accountData01, invoiceData01, relationship, 'invoices');
+    expect(accountData01, 'should return an account/invoice hierarchy').to.deep.equal(accountInvoiceHierachy);
     expect(mergeResult, 'should return an account/invoice hierarchy').to.deep.equal(accountInvoiceHierachy);
 
-    var accountData02 = JSON.parse(JSON.stringify(accountData)); // tests are destructive
-    var invoiceData02 = JSON.parse(JSON.stringify(invoiceData));
-    var mergeResult = sqljson._sqlJsonMergeHierarchy(invoiceData02, accountData02, relationship, 'accounts');
-    expect(mergeResult, 'should return an invoice/account hierarchy').to.deep.equal(invoiceAccountHierachy);
+    const accountData02 = JSON.parse(JSON.stringify(accountData)); // tests are destructive
+    const invoiceData02 = JSON.parse(JSON.stringify(invoiceData));
+    const mergeResult2 = sqljson._sqlJsonMergeHierarchy(invoiceData02, accountData02, relationship, 'accounts');
+    expect(invoiceData02, 'should return an invoice/account hierarchy').to.deep.equal(invoiceAccountHierachy);
+    expect(mergeResult2, 'should return an invoice/account hierarchy').to.deep.equal(invoiceAccountHierachy);
 
     // TODO: Test cases where there is an invalid relationship.
   });
 
   it(`040: should return correct results when nothing to convert`, (done) => {
-    var repoSqlite3 = sqljsonlib.repoSqlite3({
+    const repoSqlite3 = sqljsonlib.repoSqlite3({
       afterOpen: () => {
-        var sqljson = sqljsonlib.sqljson(repoSqlite3);
+        const sqljson = sqljsonlib.sqljson(repoSqlite3);
         sqljson.run(undefined, (err, res) => {
           expect(err, 'error shold be undefined').to.be.undefined;
           expect(res, 'result shold be undefined').to.be.undefined;
@@ -353,11 +355,11 @@ describe("sqljson library", () => {
           then sqljson should delete a record from the table,
           then sqljson should read again from the table.`, (done) => {
 
-    var accountData01 = JSON.parse(JSON.stringify(accountData)); // tests could be destructive
+    const accountData01 = JSON.parse(JSON.stringify(accountData)); // tests could be destructive
 
-    var repoSqlite3 = sqljsonlib.repoSqlite3({
+    const repoSqlite3 = sqljsonlib.repoSqlite3({
       afterOpen: () => {
-        var sqljson = sqljsonlib.sqljson(repoSqlite3);
+        const sqljson = sqljsonlib.sqljson(repoSqlite3);
 
         sqljson.run(accountTableCreateJsonSql01, (err, res) => {
           expect(err, 'should have no error').to.be.undefined;
@@ -388,11 +390,11 @@ describe("sqljson library", () => {
 
   it(`060: should support variable names in create, and delete statements`, (done) => {
 
-    var accountData01 = JSON.parse(JSON.stringify(accountData)); // tests could be destructive
+    const accountData01 = JSON.parse(JSON.stringify(accountData)); // tests could be destructive
 
-    var repoSqlite3 = sqljsonlib.repoSqlite3({
+    const repoSqlite3 = sqljsonlib.repoSqlite3({
       afterOpen: () => {
-        var sqljson = sqljsonlib.sqljson(repoSqlite3);
+        const sqljson = sqljsonlib.sqljson(repoSqlite3);
 
         sqljson.run(accountTableCreateJsonSql02, (err, res) => {
           expect(err, 'should have no error').to.be.undefined;
@@ -427,17 +429,19 @@ describe("sqljson library", () => {
 
   it(`070: should support more than one sql query at the same object level`, (done) => {
 
-    var accountData01 = JSON.parse(JSON.stringify(accountData)); // tests could be destructive
-    var invoiceData01 = JSON.parse(JSON.stringify(invoiceData)); // tests could be destructive
+    const accountData01 = JSON.parse(JSON.stringify(accountData)); // tests could be destructive
+    const invoiceData01 = JSON.parse(JSON.stringify(invoiceData)); // tests could be destructive
 
-    var selectsAtSameLevelSqlJson = {
+    const selectsAtSameLevelSqlJson = {
       accountsSql: JSON.parse(JSON.stringify(accountSelectSql)),
       invoicesSql: JSON.parse(JSON.stringify(invoiceSelectSql))
     };
 
-    var repoSqlite3 = sqljsonlib.repoSqlite3({
+    const invoiceInsertJsonSql02 = JSON.parse(JSON.stringify(invoiceInsertJsonSql01)); // tests could be destructive
+
+    const repoSqlite3 = sqljsonlib.repoSqlite3({
       afterOpen: () => {
-        var sqljson = sqljsonlib.sqljson(repoSqlite3);
+        const sqljson = sqljsonlib.sqljson(repoSqlite3);
 
         sqljson.run(accountTableCreateJsonSql01, (err, res) => {
           expect(err, 'should have no error').to.be.undefined;
@@ -445,7 +449,7 @@ describe("sqljson library", () => {
             expect(err, 'should have no error').to.be.undefined;
             sqljson.run(invoiceTableCreateJsonSql01, (err, res) => {
               expect(err, 'should have no error').to.be.undefined;
-              sqljson.run(invoiceInsertJsonSql01, (err, res) => {
+              sqljson.run(invoiceInsertJsonSql02, (err, res) => {
                 expect(err, 'should have no error').to.be.undefined;
                 sqljson.run(selectsAtSameLevelSqlJson, (err, res) => {
                   expect(err, 'should have no error').to.be.undefined;
@@ -469,14 +473,16 @@ describe("sqljson library", () => {
   it(`080: should fail nicely when an invalid sql statement is ran
              and there is more than one sql query at the same object level`, (done) => {
 
-    var selectsAtSameLevelSqlJson = {
+    const selectsAtSameLevelSqlJson = {
       accountsSql: `SELECT * FROM NoSuchTable`,
       invoicesSql: invoiceSelectSql
     };
 
-    var repoSqlite3 = sqljsonlib.repoSqlite3({
+    const invoiceInsertJsonSql02 = JSON.parse(JSON.stringify(invoiceInsertJsonSql01)); // tests could be destructive
+
+    const repoSqlite3 = sqljsonlib.repoSqlite3({
       afterOpen: () => {
-        var sqljson = sqljsonlib.sqljson(repoSqlite3);
+        const sqljson = sqljsonlib.sqljson(repoSqlite3);
 
         sqljson.run(accountTableCreateJsonSql01, (err, res) => {
           expect(err, 'should have no error').to.be.undefined;
@@ -484,7 +490,7 @@ describe("sqljson library", () => {
             expect(err, 'should have no error').to.be.undefined;
             sqljson.run(invoiceTableCreateJsonSql01, (err, res) => {
               expect(err, 'should have no error').to.be.undefined;
-              sqljson.run(invoiceInsertJsonSql01, (err, res) => {
+              sqljson.run(invoiceInsertJsonSql02, (err, res) => {
                 expect(err, 'should have no error').to.be.undefined;
                 sqljson.run(selectsAtSameLevelSqlJson, (err, res) => {
                   expect(err, 'should have an error').to.be.not.undefined;
@@ -502,7 +508,7 @@ describe("sqljson library", () => {
 
   it(`090: should support conversion of one-to-many SQL relationships to hierarchial JSON`, (done) => {
 
-    var accountsHierarchySelectJsonSql01 = {
+    const accountsHierarchySelectJsonSql01 = {
       accountsSql: {
         sql: `SELECT
                 account_id AS accountId,
@@ -524,9 +530,11 @@ describe("sqljson library", () => {
       }
     };
 
-    var repoSqlite3 = sqljsonlib.repoSqlite3({
+    const invoiceInsertJsonSql02 = JSON.parse(JSON.stringify(invoiceInsertJsonSql01)); // tests could be destructive
+
+    const repoSqlite3 = sqljsonlib.repoSqlite3({
       afterOpen: () => {
-        var sqljson = sqljsonlib.sqljson(repoSqlite3);
+        const sqljson = sqljsonlib.sqljson(repoSqlite3);
 
         sqljson.run(accountTableCreateJsonSql01, (err, res) => {
           expect(err, 'should have no error 1').to.be.undefined;
@@ -534,7 +542,7 @@ describe("sqljson library", () => {
             expect(err, 'should have no error 2').to.be.undefined;
             sqljson.run(accountInsertJsonSql01, (err, res) => {
               expect(err, 'should have no error 3').to.be.undefined;
-              sqljson.run(invoiceInsertJsonSql01, (err, res) => {
+              sqljson.run(invoiceInsertJsonSql02, (err, res) => {
                 expect(err, 'should have no error 4').to.be.undefined;
                 sqljson.run(accountsHierarchySelectJsonSql01, (err, res) => {
                   expect(err, 'should have no error 5').to.be.undefined;

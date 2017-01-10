@@ -1,12 +1,12 @@
 let sqlite3 = require('sqlite3');
 
 function repoSqlite3(options, database) {
-  var defaultOptions = {
+  const defaultOptions = {
     repositoryName: ':memory:',
     afterOpen: function() {},
     afterClose: function() {}
   };
-  var f = Object.create(RepoSqlite3.prototype);
+  const f = Object.create(RepoSqlite3.prototype);
   f._options = Object.assign(defaultOptions, options);
   return f;
 }
@@ -51,8 +51,8 @@ RepoSqlite3.prototype.run = function(sql, callback) {
 }
 
 RepoSqlite3.prototype.insert = function(sql, data, callback) {
-  var stmt = this.repository.prepare(sql);
-  for (var i = 0; i < data.length; i++) {
+  const stmt = this.repository.prepare(sql);
+  for (let i = 0; i < data.length; i++) {
     stmt.run("Ipsum " + data[i]);
   }
   stmt.finalize(callback);
