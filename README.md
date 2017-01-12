@@ -22,7 +22,19 @@ We hope this standard will be implemented in different languages (Java, Javascri
 
 ## SqlJson: Introduction
 
-### SqlJson: A Basic Example
+### SqlJson: Basic Format
+
+The *SqlJson* has the following basic format:
+
+```
+{
+  sqlJson: {
+    sql: `SELECT * FROM NoSuchTable`,
+    propertyName: 'accounts',
+    type: 'array'
+  }
+}
+
 
 *SqlJson* looks for properties ending with the word **Sql**, runs the **SQL** in that property, creates a new object with a property of the same name minus the word **Sql** and places the result in that property.
 

@@ -105,16 +105,18 @@ SqlJson.prototype._propNameGet = function(propNameRaw) {
   return propNameRaw.replace('Sql', '');
 }
 
-SqlJson.prototype._sqlJsonProperties = function(sqljson) {
-  return undefined === sqljson || null === sqljson ? [] : Object.keys(sqljson).filter(this._endsWithSql);
+SqlJson.prototype._sqlJsonProperties = function(sqljson, firstCall) {
+
+  return (undefined !== firstCall) ? [sqljson] :
+    (undefined === sqljson || null === sqljson || undefined === sqljson.sqlJson) ? [] :
+    sqljson.sqlJson instanceof Array ? sqljson.sqlJson : [sqljson.sqlJson];
 }
 
-SqlJson.prototype._propContextCreate = function(prop, sqljson, result) {
+SqlJson.prototype._propContextCreate = function(sqljsonformat, sqljson, result) {
   const propContext = {
-    prop: prop,
     root: sqljson,
-    propName: this._propNameGet(prop),
-    sql: sqljson[prop],
+    propName: sqljsonformat.propertyName,
+    sql: sqljsonformat.sql,
     result: result,
     finalSql: undefined,
     type: undefined
@@ -152,11 +154,11 @@ SqlJson.prototype._runQuery = function(propContext, callback) {
   }
 }
 
-SqlJson.prototype.run = function(sqljson, callback) {
+SqlJson.prototype.run = function(sqljson, callback, firstCall) {
   if (undefined !== sqljson && null !== sqljson) {
-    const properties = this._sqlJsonProperties(sqljson);
+    const properties = this._sqlJsonProperties(sqljson, firstCall);
     if (properties.length > 0) {
-      const result = {}; // result shared between properties.
+      const result = {}; // result shared between recursive calls.
       properties.forEach((prop, pos) => {
         const propContext = this._propContextCreate(prop, sqljson, result);
         this._runQuery(propContext, (err, parent) => {
@@ -164,16 +166,14 @@ SqlJson.prototype.run = function(sqljson, callback) {
             callback(err, undefined);
           } else {
             if (pos === properties.length - 1) {
-              const sqljsonsub = sqljson[prop];
-              const childProperties = this._sqlJsonProperties(sqljsonsub);
-              if (0 < childProperties.length) { // short circuit recursive call
+              const sqljsonsub = prop.sqlJson;
+              if (undefined !== sqljsonsub) { // short circuit recursive call
                 this.run(sqljsonsub, (err, child) => {
-                  childProperties.forEach((propChild) => {
-                    const propNameChild = this._propNameGet(propChild);
-                    this._sqlJsonMergeHierarchy(parent[propContext.propName], child[propNameChild], sqljsonsub[propChild].relationship, propNameChild);
+                  Object.keys(result).forEach((propNameParent) => {
+                    this._sqlJsonMergeHierarchy(parent[propNameParent], child[sqljsonsub.propertyName], sqljsonsub.relationship, sqljsonsub.propertyName);
                   });
                   callback(err, parent);
-                });
+                }, 1);
               } else {
                 callback(err, parent);
               }
