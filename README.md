@@ -12,10 +12,10 @@ We hope this standard will be implemented in different languages (Java, Javascri
 
 ### What *SqlJson* Isn't!
 
-* *SqlJson* is **not** an ORM (Object Resource Manager)[^1]. It is a data format.
+* *SqlJson* is **not** an ORM (Object Resource Manager)[^1]. It is a data format standard.
 * *SqlJson*, at this time, does not support transactions.
 * *SqlJson* does not understand models[^2].
-* *SqlJson* does not validate *SQL*. It is a data format.
+* *SqlJson* does not validate *SQL*. It is a data format standard.
 * *SqlJson*, currently, does not know what flavor of *SQL* is being used.
 
 # Documentation
@@ -24,75 +24,52 @@ We hope this standard will be implemented in different languages (Java, Javascri
 
 ### SqlJson: Basic Format
 
-The *SqlJson* has the following basic format:
+*SqlJson* has the following basic format:
+
+* **sqlJson** - Placed at the root of your *JSON*.
+* **sql** - Contains the SQL statement.
+* **propertyName** - Destination property of *SQL* results.
+  * TODO: Support *JSONPath* syntax
+* **type** - The result type of the *propertyName*. See [**Type**](#Type).
 
 ```
 {
   sqlJson: {
-    sql: `SELECT * FROM NoSuchTable`,
+    sql: `SELECT * FROM account;`,
     propertyName: 'accounts',
     type: 'array'
   }
 }
-
-
-*SqlJson* looks for properties ending with the word **Sql**, runs the **SQL** in that property, creates a new object with a property of the same name minus the word **Sql** and places the result in that property.
-
-The following **SqlJson**:
-
-```js
-{
-  accountsSql: `SELECT * FROM account;`
-}
 ```
 
 becomes:
 
-```js
-{
-  accounts: <account data>
-}
-```
-
-### SqlJson: Additional Sql Meta-Data
-
-Use the following if you need to provide additional *SQL* meta-data:
 
 ```js
 {
-  accountsSql: {
-    sql: `SELECT * FROM account;`,
-    resultType: 'array',
-    propertyName: 'acct'
-  }
+  accounts: [<account data>]
 }
 ```
 
-becomes:
+## Type
 
-```js
-{
-  acct: [<account data>]
-}
-```
+The results of a *SQL* call can be one of the following types:
 
-Note the *acct* property is now an array.
+* *array*
+* *object*
+* *string*
+* *number*
 
-TODO: Implement *propertyName*.
-
-## Choosing The Result Type
-
-The results of a *SQL* call can be one of the following:
-
-* A primitive type: string, number, etc.
-* An *object*: {}
-* An *array*: []
+The type can be determined based on the *type* property or based on the existing type of the destination property.
 
 ### An Array
 
 ```js
 {
-  accountsSql: `SELECT * FROM account;`,
+  sqlJson: {
+    sql: `SELECT * FROM account;`,
+    propertyName: 'accounts'
+  },
   accounts: []
 }
 ```
@@ -103,14 +80,16 @@ Because the *accounts* property is initialized to an *array*, *SqlJson* will pop
 
 ```js
 {
-  accountsSql: 'SELECT * FROM account WHERE account_id = 1;',
-  accounts: {}
+  sqlJson: {
+    sql: `SELECT * FROM account WHERE account_id = 1;`,
+    propertyName: 'accounts'
+  },
 }
 ```
 
 Because the *accounts* property is initialized to an *object*, *SqlJson* will populate the object with the results of the *Sql* call. An exception is thrown if more than one row is returned from the *Sql* call. If no rows are returned, accounts would be set to undefined[^3].
 
-### A primitive type
+### A Primitive Type
 
 ```js
 {
@@ -122,7 +101,7 @@ Because the *accounts* property is initialized to an *object*, *SqlJson* will po
 }
 ```
 
-Because the account property is initialized to an empty string, *SqlJson* will populate the object with the results of the *accountName* field of the *Sql* call. An exception is thrown if more than one row is returned from the *Sql* call. If no rows are returned, account would be set to undefined (not null).
+Because the account property is initialized to an empty string, *SqlJson* will populate the object with the results of the *accountName* field of the *Sql* call. An exception is thrown if more than one row is returned from the *Sql* call. If no rows are returned, account would be set to undefined[^3].
 
 ### No Type Provided
 
@@ -146,40 +125,6 @@ Because no property is provided or the property is undefined, *SqlJson* will do 
 * One Result: *SqlJson* will create an *object*, populate the *object*, and place that *object* in the property. A single result will never result in a primitive data type.
 * Multiple Results: *SqlJson* will create an *array*, fill the *array* with the results, and place the *array* in the *property*.
 
-### Forcing a Result Type
-
-You may want to force the type of result. You can do this using the *resultType* meta-data property as follows:
-
-```js
-{
-  accountsSql: {
-    sql: 'SELECT * FROM account;',
-    resultType: 'array'
-  }
-  accounts: undefined
-}
-```
-
-or
-
-```js
-{
-  accountsSql: {
-    sql: 'SELECT * FROM account;',
-    resultType: 'array'
-  }
-}
-```
-
-This will cause the *accounts* property to be of type array.
-
-The valid resultType values are:
-
-* *array*
-* *object*
-* *string*
-* *number*
-
 
 # Features
 
@@ -189,16 +134,21 @@ To read from a *SQL* database and convert results to *JSON* use the following *S
 
 ```js
 var selectExample = {
-  accountsSql: {
+  sqlJson: {
     sql: `SELECT account_id AS accountId,
                  first_name AS firstName,
                  family_name AS familyName,
-          FROM account;`
+          FROM account;`,
+    propertyName: 'accounts',
+    type: 'array'
   }
 }
 ```
 
-The Query result is mapped to the users property. This example contains two records in the database.
+The Query result is placed at the root of the *JSON* in a property named *accounts*.
+
+Let's assume there are two records in the *account* table.
+
 
 ```js
 var repoSqlite3 = sqljsonlib.repoSqlite3({
@@ -227,17 +177,16 @@ will log to the console:
 }
 ```
 
-* *SqlJson* uses the column names in the select statement to generate the *JSON* objects.
-
 ## *JSON* to *SQL* - *SQL* INSERT 
 
 To convert and persist *JSON* to *SQL* use the following *SqlJson* format:
 
 ```js
 var insertExample = {
-  accountsSql: {
-    sql: `INSERT INTO accounts(account_id, first_name, family_name)
-          VALUES(@accountId@, @firstName@, @familyName@);`
+  sqlJson: {
+    sql: `INSERT INTO account(account_id, first_name, family_name)
+          VALUES(:accountId, :firstName, :familyName);`,
+   propertyName: 'accounts'
   },
   accounts : [{
     accountId: '961fe224-8943-47fb-b08a-92123d9d7211',
@@ -251,7 +200,8 @@ var insertExample = {
 }
 ```
 
-* *SqlJson* uses the property name (or a jquery statement) surrounded by the **@** symbol.
+* The *:[JSONPath]* is used to locate values within the json to generate the *SQL*.
+  * TODO: Implement JSONPath support.
 
 The following generates and runs *SQL* against the repository:
 
@@ -277,19 +227,19 @@ INSERT INTO users(
 
 ### Variables In *SQL*
 
-*SqlJson* supports variables within the *SQL* that will be replaced by *SqlJson* before executing the *SQL*.
+*SqlJson* supports variables within the *SQL* that are replaced by *SqlJson* before executing the *SQL*.
 
 ```js
 var selectInExample = {
-  accountsSql: {
+  sqlJson: {
     sql: `SELECT account_id AS accountId,
                  first_name AS firstName,
                  family_name AS familyName,
           FROM account
-          WHERE account_id IN (@userIds@);`,
-    userIds: ['961fe224-8943-47fb-b08a-92123d9d7211',
+          WHERE account_id IN (:userIds);`,
+  },
+  userIds: ['961fe224-8943-47fb-b08a-92123d9d7211',
               'cb89b50c-65e0-4ed5-a8ed-fb240b3b2830']
-  }
 };
 ```
 
@@ -305,23 +255,27 @@ WHERE account_id IN
   'cb89b50c-65e0-4ed5-a8ed-fb240b3b2830');
 ```
 
-### Multiple Selects in Same Object
+### Multiple Selects At Same Object Level
 
-*SqlJson* supports multiple *SQL* statements within an object:
+*SqlJson* supports multiple *SQL* statements within an object. Note that sqlJson is now an array:
 
 ```
 var multipleStatements = {
-  accountsSql: `
-    SELECT account_id AS accountId,
+  sqlJson: [{
+    sql: `SELECT account_id AS accountId,
            first_name AS firstName,
            family_name AS familyName,
     FROM account;`,
-  invoicesSql: `
-    SELECT invoice_id AS invoiceId,
+    propertyName: 'accounts',
+    type: 'array'
+  }, {
+    sql: `SELECT invoice_id AS invoiceId,
            account_id AS accountId,
            description
-    FROM invoice;`
-  }
+    FROM invoice;`,
+    propertyName: 'invoices',
+    type: 'array'
+  }]
 }
 ```
 
@@ -340,16 +294,20 @@ becomes:
 
 ```js
 {
-  accountsSql: {
+  sqlJson: {
     sql: `SELECT account_id AS accountId,
                  first_name AS firstName,
                  family_name AS familyName
           FROM account;`,
-    invoicesSql: {
+    propertyName: 'accounts',
+    type: 'array',
+    sqlJson: {
       sql: `SELECT invoice_id AS invoiceId,
                    account_id AS accountId,
                    description
             FROM invoice`,
+      propertyName: 'invoices',
+      type: 'array',
       relationship: {
         parent: 'accountId',
         child: 'accountId',
@@ -408,7 +366,7 @@ Notice *invoices* are now properties of accounts.
 
 ## Future Features
 
-* Use Jquery, instead of just a property name, to get data from the data property.
+* Use SQLJson, instead of just a property name, to get data from the data property.
 * Provide information on sql format standard (Oracle, MySql, sqlite, etc.). May not be required/beyond scope.
 * Some kind of security so people can't do things like accidentally drop a database. Could be beyond scope.
 * Invalid sql statments are not valided by us. We will just take the results from back end server and display them if the sql is invalid.
@@ -419,8 +377,6 @@ Notice *invoices* are now properties of accounts.
 
 
 ## Features Considered and Not Implemented
-
-
 
 
 ## Setup

@@ -43,7 +43,8 @@ SqlJson.prototype._sqlJsonMergeHierarchy = function(parent, child, join, propNam
       return parent;
     }
 
-    // Note: Had a hash to get O(2N) but situations where O(N^2) is necessary
+    // Note: Had a hash to get O(2N) but situations exist where O(N^2) is necessary
+    //       Will refactor back to O(N) at some point.
     parent.forEach((itemParent) => {
       itemParent[propName] = [];
       child.forEach((itemChild) => {
