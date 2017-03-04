@@ -99,7 +99,7 @@ SqlJson.prototype._sqlJsonProperties = function(sqljson, firstCall) {
 SqlJson.prototype._propContextCreate = function(sqljsonformat, sqljson, result) {
   const propContext = {
     root: sqljson,
-    propName: sqljsonformat.propertyName,
+    propName: sqljsonformat.dataPath,
     sql: sqljsonformat.sql,
     result: result,
     finalSql: undefined,
@@ -154,7 +154,7 @@ SqlJson.prototype.run = function(sqljson, callback, firstCall) {
               if (undefined !== sqljsonsub) { // short circuit recursive call
                 this.run(sqljsonsub, (err, child) => {
                   Object.keys(result).forEach((propNameParent) => {
-                    this._sqlJsonMergeHierarchy(parent[propNameParent], child[sqljsonsub.propertyName], sqljsonsub.relationship, sqljsonsub.propertyName);
+                    this._sqlJsonMergeHierarchy(parent[propNameParent], child[sqljsonsub.dataPath], sqljsonsub.relationship, sqljsonsub.dataPath);
                   });
                   callback(err, parent);
                 }, 1);

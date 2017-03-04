@@ -48,7 +48,7 @@ describe("sqljson library", () => {
   const accountSelectJsonSql01 = {
     sqlJson: {
       sql: accountSelectSql,
-      propertyName: 'accounts',
+      dataPath: 'accounts',
       type: 'array'
     }
   };
@@ -62,7 +62,7 @@ describe("sqljson library", () => {
                   FROM account
                   WHERE account_id IN (:accountIds)
                   OR account_id IN (:accountIds);`,
-      propertyName: 'accounts',
+      dataPath: 'accounts',
       type: 'array'
     },
     accountIds: ['961fe224-8943-47fb-b08a-92123d9d7211', 'cb89b50c-65e0-4ed5-a8ed-fb240b3b2830']
@@ -72,7 +72,7 @@ describe("sqljson library", () => {
     sqlJson: {
       sql: `INSERT INTO account(account_id, first_name, family_name) VALUES
                     (:accountId, :firstName, :familyName);`,
-      propertyName: 'accounts',
+      dataPath: 'accounts',
     },
     accounts: accountData
   };
@@ -129,7 +129,7 @@ describe("sqljson library", () => {
     sqlJson: {
       sql: `INSERT INTO invoice(invoice_id, account_id, description) VALUES
                   (:invoiceId, :accountId, :description);`,
-      propertyName: 'invoices'
+      dataPath: 'invoices'
     },
     invoices: invoiceData
   };
@@ -144,7 +144,7 @@ describe("sqljson library", () => {
   const invoiceSelectJsonSql01 = {
     sqlJson: {
       sql: invoiceSelectSql,
-      propertyName: 'invoices',
+      dataPath: 'invoices',
       type: 'array'
     }
   };
@@ -476,11 +476,11 @@ describe("sqljson library", () => {
     const selectsAtSameLevelSqlJson = {
       sqlJson: [{
         sql: JSON.parse(JSON.stringify(accountSelectSql)),
-        propertyName: 'accounts',
+        dataPath: 'accounts',
         type: 'array'
       }, {
         sql: JSON.parse(JSON.stringify(invoiceSelectSql)),
-        propertyName: 'invoices',
+        dataPath: 'invoices',
         type: 'array'
       }, ]
     };
@@ -523,11 +523,11 @@ describe("sqljson library", () => {
     const selectsAtSameLevelSqlJson = {
       sqlJson: [{
         sql: `SELECT * FROM NoSuchTable`,
-        propertyName: 'accounts',
+        dataPath: 'accounts',
         type: 'array'
       }, {
         sql: JSON.parse(JSON.stringify(invoiceSelectSql)),
-        propertyName: 'invoices',
+        dataPath: 'invoices',
         type: 'array'
       }, ]
     };
@@ -569,7 +569,7 @@ describe("sqljson library", () => {
                 first_name AS firstName,
                 family_name AS familyName
               FROM account;`,
-        propertyName: 'accounts',
+        dataPath: 'accounts',
         type: 'array',
         sqlJson: {
           sql: `SELECT
@@ -577,7 +577,7 @@ describe("sqljson library", () => {
                   account_id AS accountId,
                   description
                 FROM invoice;`,
-          propertyName: 'invoices',
+          dataPath: 'invoices',
           type: 'array',
           relationship: {
             parent: 'accountId',

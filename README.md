@@ -27,16 +27,17 @@ We hope this standard will be implemented in different languages (Java, Javascri
 *SqlJson* has the following basic format:
 
 * **sqlJson** - Placed at the root of your *JSON*.
-* **sql** - Contains the SQL statement.
-* **propertyName** - Destination property of *SQL* results.
+* **sql** - Contains SQL statement(s) used to generate and/or save *JSON*.
+* **dataPath** - For database reads, the location of a property in the *JSON* where *SQL* results are placed. For database writes, the location of a property in the *JSON* containting data to store in the database.
   * TODO: Support *JSONPath* syntax
-* **type** - The result type of the *propertyName*. See [**Type**](#Type).
+* **sourceProperty** - Name of property in *JSON* to place the *SQL* results.
+* **type** - The primitive data type of the *dataPath*. See [**Type**](#Type).
 
 ```
 {
   sqlJson: {
     sql: `SELECT * FROM account;`,
-    propertyName: 'accounts',
+    dataPath: 'accounts',
     type: 'array'
   }
 }
@@ -68,7 +69,7 @@ The type can be determined based on the *type* property or based on the existing
 {
   sqlJson: {
     sql: `SELECT * FROM account;`,
-    propertyName: 'accounts'
+    dataPath: 'accounts'
   },
   accounts: []
 }
@@ -82,7 +83,7 @@ Because the *accounts* property is initialized to an *array*, *SqlJson* will pop
 {
   sqlJson: {
     sql: `SELECT * FROM account WHERE account_id = 1;`,
-    propertyName: 'accounts'
+    dataPath: 'accounts'
   },
 }
 ```
@@ -139,7 +140,7 @@ var selectExample = {
                  first_name AS firstName,
                  family_name AS familyName,
           FROM account;`,
-    propertyName: 'accounts',
+    dataPath: 'accounts',
     type: 'array'
   }
 }
@@ -186,7 +187,7 @@ var insertExample = {
   sqlJson: {
     sql: `INSERT INTO account(account_id, first_name, family_name)
           VALUES(:accountId, :firstName, :familyName);`,
-   propertyName: 'accounts'
+   dataPath: 'accounts'
   },
   accounts : [{
     accountId: '961fe224-8943-47fb-b08a-92123d9d7211',
@@ -266,14 +267,14 @@ var multipleStatements = {
            first_name AS firstName,
            family_name AS familyName,
     FROM account;`,
-    propertyName: 'accounts',
+    dataPath: 'accounts',
     type: 'array'
   }, {
     sql: `SELECT invoice_id AS invoiceId,
            account_id AS accountId,
            description
     FROM invoice;`,
-    propertyName: 'invoices',
+    dataPath: 'invoices',
     type: 'array'
   }]
 }
@@ -299,19 +300,20 @@ becomes:
                  first_name AS firstName,
                  family_name AS familyName
           FROM account;`,
-    propertyName: 'accounts',
+    dataPath: 'accounts',
     type: 'array',
     sqlJson: {
       sql: `SELECT invoice_id AS invoiceId,
                    account_id AS accountId,
                    description
             FROM invoice`,
-      propertyName: 'invoices',
+      dataPath: 'invoices',
       type: 'array',
       relationship: {
         parent: 'accountId',
         child: 'accountId',
-        type: 'array'
+        type: 'array',
+        includeForeignKey: false
       }
     }
   }
@@ -328,8 +330,9 @@ The relationship is defined in the child using the relationship property and fol
 }
 ```
 
-* *Parent* == *Child* - A comparison is done using the parent property name and child property name.
-* type - Expected type of the Parent property children are placed into. By default, this is an array.
+* *Parent === Child* - A comparison is done using the parent property name and child property name.
+* *type* - Expected type of the Parent property children are placed into. By default, this is an array.
+* *includeForeignKey* - When true, the foreign key of the child is included in the final *JSON*. When false, the key of the child is **not** included in the final *JSON*.
 
 Example output:
 
@@ -341,11 +344,9 @@ Example output:
     familyName: 'Lacy',
     invoices: [{
       invoiceId: 'f91dc9ca-bb9d-4952-85ae-b73ac876de7d',
-      accountId: '961fe224-8943-47fb-b08a-92123d9d7211',
       description: 'First Invoice'
     }, {
       invoiceId: 'ad5e6b4d-623b-46f1-a4ae-ba41d40b5dab',
-      accountId: '961fe224-8943-47fb-b08a-92123d9d7211',
       description: 'Second Invoice'
     }]
   }, {
@@ -354,7 +355,6 @@ Example output:
     familyName: 'Lane',
     invoices: [{
       invoiceId: '2d42e427-8f40-47f7-b8d1-dfc1e9ee3237',
-      accountId: 'cb89b50c-65e0-4ed5-a8ed-fb240b3b2830',
       description: 'Third Invoice'
     }]
   }]
@@ -362,11 +362,11 @@ Example output:
 
 ```
 
-Notice *invoices* are now properties of accounts.
+Notice *invoices* are now properties of accounts. Since *includeForeignKey* is false, the *accountId* foreign key is not part of the invoices *JSON*.
 
 ## Future Features
 
-* Use SQLJson, instead of just a property name, to get data from the data property.
+* Use JSONPath, instead of just a property name, to get data from the data property.
 * Provide information on sql format standard (Oracle, MySql, sqlite, etc.). May not be required/beyond scope.
 * Some kind of security so people can't do things like accidentally drop a database. Could be beyond scope.
 * Invalid sql statments are not valided by us. We will just take the results from back end server and display them if the sql is invalid.
