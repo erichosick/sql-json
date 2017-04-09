@@ -1,3 +1,5 @@
+let camelCase = require('camel-case');
+
 function sqljson(repo) {
   const f = Object.create(SqlJson.prototype);
   f.repo = repo;
@@ -81,16 +83,7 @@ SqlJson.prototype.toSql = function(context) {
   };
 }
 
-SqlJson.prototype._endsWithSql = function(str) {
-  return str.indexOf('Sql', str.length - 3) !== -1;
-}
-
-SqlJson.prototype._propNameGet = function(propNameRaw) {
-  return propNameRaw.replace('Sql', '');
-}
-
 SqlJson.prototype._sqlJsonProperties = function(sqljson, firstCall) {
-
   return (undefined !== firstCall) ? [sqljson] :
     (undefined === sqljson || null === sqljson || undefined === sqljson.sqlJson) ? [] :
     sqljson.sqlJson instanceof Array ? sqljson.sqlJson : [sqljson.sqlJson];
@@ -113,6 +106,35 @@ SqlJson.prototype._propContextCreate = function(sqljsonformat, sqljson, result) 
   return propContext;
 }
 
+// Warning: destructive
+SqlJson.prototype._camelCase = function(rows) {
+  if (undefined !== rows) {
+    let changePropNames = false;
+    if (undefined !== rows[0]) {
+      for (var propName in rows[0]) {
+        let propNameCamel = camelCase(propName);
+        if (propName !== propNameCamel) {
+          changePropNames = true;
+          break; // just need to find one
+        }
+      }
+    }
+
+    if (changePropNames) {
+      rows.forEach((item) => {
+        for (var propName in item) {
+          let propNameCamel = camelCase(propName);
+          if (propName !== propNameCamel) {
+            item[propNameCamel] = item[propName];
+            delete item[propName];
+          }
+        }
+      });
+    }
+  }
+  return rows;
+}
+
 SqlJson.prototype._runQuery = function(propContext, callback) {
   switch (propContext.type) {
     case 'insert':
@@ -125,7 +147,7 @@ SqlJson.prototype._runQuery = function(propContext, callback) {
       break;
     case 'select':
       this.repo.select(propContext.finalSql, (err, rows) => {
-        propContext.result[propContext.propName] = rows;
+        propContext.result[propContext.propName] = this._camelCase(rows);
         callback(err, propContext.result);
       });
       break;

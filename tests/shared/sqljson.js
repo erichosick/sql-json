@@ -53,6 +53,22 @@ describe("sqljson library", () => {
     }
   };
 
+  const accountSelectCamelSql = `
+      SELECT
+        account_id,
+        first_name,
+        family_name
+      FROM account;`;
+
+  const accountSelectJsonSqlCamel01 = {
+    sqlJson: {
+      sql: accountSelectCamelSql,
+      dataPath: 'accounts',
+      type: 'array'
+    }
+  };
+
+
   // OR so we can do replace multiple variables with the same name
   const accountsSelectJsonSql02 = {
     sqlJson: {
@@ -560,6 +576,7 @@ describe("sqljson library", () => {
     });
     repoSqlite3.open;
   });
+
   it(`090: should support conversion of one-to-many SQL relationships to hierarchial JSON`, (done) => {
 
     const accountsHierarchySelectJsonSql01 = {
@@ -610,6 +627,34 @@ describe("sqljson library", () => {
                   done();
                 });
               });
+            });
+          });
+        });
+      }
+    });
+    repoSqlite3.open;
+  });
+
+  it(`100: should convert from SQL snake-case to JavaScript camelCase by default`, (done) => {
+
+    const accountData01 = JSON.parse(JSON.stringify(accountData)); // tests could be destructive
+
+    const accountSelectJsonSqlCamel02 = JSON.parse(JSON.stringify(accountSelectJsonSqlCamel01));
+
+    const repoSqlite3 = sqljsonlib.repoSqlite3({
+      afterOpen: () => {
+        const sqljson = sqljsonlib.sqljson(repoSqlite3);
+
+        sqljson.run(accountTableCreateJsonSql01, (err, res) => {
+          expect(err, 'should have no error').to.be.undefined;
+          sqljson.run(accountInsertJsonSql01, (err, res) => {
+            expect(err, 'should have no error').to.be.undefined;
+            sqljson.run(accountSelectJsonSqlCamel02, (err, res) => {
+              expect(err, 'should have no error').to.be.undefined;
+              expect(res, 'should return correct json').to.deep.equal({
+                accounts: accountData01
+              });
+              done();
             });
           });
         });

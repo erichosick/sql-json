@@ -64,21 +64,21 @@ describe("repo for Sqlite3 library", () => {
   it("06: should return an error when run is called without open", () => {
     var repoSqlite3 = sqljsonlib.repoSqlite3({});
     repoSqlite3.run(`CREATE TABLE IF NOT EXISTS lorem (info TEXT)`, (err) => {
-      expect(err, 'should have error').to.equal('Call to open required before using repository.');
+      expect(err, 'should have error').to.equal('Call to open required before calling run.');
     });
   });
 
   it("07: should return an error when insert is called without open", () => {
     var repoSqlite3 = sqljsonlib.repoSqlite3({});
     repoSqlite3.insert(`CREATE TABLE IF NOT EXISTS lorem (info TEXT)`, {}, (err) => {
-      expect(err, 'should have error').to.equal('Call to open required before using repository.');
+      expect(err, 'should have error').to.equal('Call to open required before calling insert.');
     });
   });
 
   it("08: should return an error when select is called without open", () => {
     var repoSqlite3 = sqljsonlib.repoSqlite3({});
     repoSqlite3.select(`CREATE TABLE IF NOT EXISTS lorem (info TEXT)`, (err) => {
-      expect(err, 'should have error').to.equal('Call to open required before using repository.');
+      expect(err, 'should have error').to.equal('Call to open required before calling select.');
     });
   });
 

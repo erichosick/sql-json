@@ -45,5 +45,8 @@
     "mocha": "^3.0.2",
     "require-sql": "^1.0.0",
     "sqlite3": "^3.1.8"
+  },
+  "dependencies": {
+    "camel-case": "^3.0.0"
   }
 }

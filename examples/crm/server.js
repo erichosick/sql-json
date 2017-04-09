@@ -26,7 +26,7 @@ app.get('/', function (req, res) {
 app.get('/individuals', function (req, res) {
   sj.run( {
       sqlJson: {
-        sql: `SELECT individual_id AS individualId, first_name AS firstName, family_name AS familyName FROM individual;`,
+        sql: `SELECT * FROM individual;`,
         dataPath: 'individuals'
       }
     }, (err, result) => {

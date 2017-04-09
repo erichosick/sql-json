@@ -46,7 +46,7 @@ RepoSqlite3.prototype = Object.create(Object.prototype, {
 
 RepoSqlite3.prototype.run = function(sql, callback) {
   if (undefined === this.repository) {
-      callback('Call to open required before using repository.');
+      callback('Call to open required before calling run.');
   } else {
     this.repository.run(sql, (err, res) => {
       callback(null === err ? undefined : err, res);
@@ -56,7 +56,7 @@ RepoSqlite3.prototype.run = function(sql, callback) {
 
 RepoSqlite3.prototype.insert = function(sql, data, callback) {
   if (undefined === this.repository) {
-      callback('Call to open required before using repository.');
+      callback('Call to open required before calling insert.');
   } else {
     const stmt = this.repository.prepare(sql);
     for (let i = 0; i < data.length; i++) {
@@ -68,7 +68,7 @@ RepoSqlite3.prototype.insert = function(sql, data, callback) {
 
 RepoSqlite3.prototype.select = function(sql, callback) {
   if (undefined === this.repository) {
-    callback('Call to open required before using repository.', 0);
+    callback('Call to open required before calling select.', 0);
   } else {
     this.repository.all(sql, (err, rows) => {
       callback(err === null ? undefined : err, rows);

@@ -138,6 +138,30 @@ Because no property is provided or the property is undefined, *SqlJson* will do 
 
 # Features
 
+## SQL snake-case to Javascript camelCase
+
+By default, *SqlJson* will convert SQL snake-case naming convention to Javascript camelCase.
+
+The following two selects return the same *JSON* object:
+
+```sql
+SELECT account_id AS accountId,
+      first_name AS firstName,
+      family_name AS familyName,
+FROM account;
+```
+
+and
+
+```sql
+SELECT account_id,
+      first_name,
+      family_name,
+FROM account;
+```
+
+result in *JSON* with properties of *accountId*, *firstName* and *familyName*.
+
 ## *SQL* to *JSON* - *SQL* SELECT
 
 To read from a *SQL* database and convert results to *JSON* use the following *SqlJson* format:
