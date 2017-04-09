@@ -22,6 +22,15 @@ We hope this standard will be implemented in different languages (Java, Javascri
 
 ## SqlJson: Introduction
 
+### Example RESTful Service
+
+```
+$ npm install // don't forget this
+$ cd examples/crm
+$ node server.js
+// browse to http://localhost:3000/individuals
+```
+
 ### SqlJson: Basic Format
 
 *SqlJson* has the following basic format:

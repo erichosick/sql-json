@@ -193,7 +193,7 @@ SqlJson.prototype.run = function(sqljson, callback, firstCall) {
 sqljsonlib.sqljson = sqljson;
 let sqlite3 = require('sqlite3');
 
-function repoSqlite3(options, database) {
+function repoSqlite3(options) {
   const defaultOptions = {
     repositoryName: ':memory:',
     afterOpen: function() {},
@@ -238,23 +238,35 @@ RepoSqlite3.prototype = Object.create(Object.prototype, {
 });
 
 RepoSqlite3.prototype.run = function(sql, callback) {
-  this.repository.run(sql, (err, res) => {
-    callback(null === err ? undefined : err, res);
-  });
+  if (undefined === this.repository) {
+      callback('Call to open required before using repository.');
+  } else {
+    this.repository.run(sql, (err, res) => {
+      callback(null === err ? undefined : err, res);
+    });
+  }
 }
 
 RepoSqlite3.prototype.insert = function(sql, data, callback) {
-  const stmt = this.repository.prepare(sql);
-  for (let i = 0; i < data.length; i++) {
-    stmt.run("Ipsum " + data[i]);
+  if (undefined === this.repository) {
+      callback('Call to open required before using repository.');
+  } else {
+    const stmt = this.repository.prepare(sql);
+    for (let i = 0; i < data.length; i++) {
+      stmt.run("Ipsum " + data[i]);
+    }
+    stmt.finalize(callback);
   }
-  stmt.finalize(callback);
 }
 
 RepoSqlite3.prototype.select = function(sql, callback) {
-  this.repository.all(sql, (err, rows) => {
-    callback(err === null ? undefined : err, rows);
-  });
+  if (undefined === this.repository) {
+    callback('Call to open required before using repository.', 0);
+  } else {
+    this.repository.all(sql, (err, rows) => {
+      callback(err === null ? undefined : err, rows);
+    });
+  }
 }
 
 sqljsonlib.repoSqlite3 = repoSqlite3;
