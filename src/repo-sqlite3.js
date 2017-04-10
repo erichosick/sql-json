@@ -44,12 +44,25 @@ RepoSqlite3.prototype = Object.create(Object.prototype, {
   }
 });
 
+// TODO: This will not work with ; in quotes or comments, etc.
+//       IN A HUGE WAY, this will need to be updated
+RepoSqlite3.prototype._split = function(sql) {
+  return (undefined === sql) ? [] : sql.split(';').filter((sql) => sql.trim() !== '' );
+}
+
 RepoSqlite3.prototype.run = function(sql, callback) {
   if (undefined === this.repository) {
       callback('Call to open required before calling run.');
   } else {
-    this.repository.run(sql, (err, res) => {
-      callback(null === err ? undefined : err, res);
+    let sqlArr = this._split(sql);
+    let sqlLastPos = sqlArr.length - 1;
+
+    sqlArr.forEach( (sql, index) => {
+      this.repository.run(sql, (err, res) => {
+        if (sqlLastPos === index) {
+          callback(null === err ? undefined : err, res);
+        }
+      });
     });
   }
 }

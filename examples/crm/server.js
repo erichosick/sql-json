@@ -19,6 +19,8 @@ function sendResult(res, err, data) {
   }
 }
 
+// Individuals
+
 app.get('/', function (req, res) {
   res.send('Empty');
 });
@@ -48,6 +50,66 @@ app.get('/individuals/:individualId', function (req, res) {
   });
 });
 
+// countries and addresses
+
+app.get('/countries', function (req, res) {
+  sj.run( {
+      sqlJson: {
+        sql: `SELECT * FROM country;`,
+        dataPath: 'countries'
+      }
+    }, (err, result) => {
+      sendResult(res, err, result);
+  });
+});
+
+
+app.get('/addressTypes', function (req, res) {
+  sj.run( {
+      sqlJson: {
+        sql: `SELECT * FROM address_type;`,
+        dataPath: 'addressTypes'
+      }
+    }, (err, result) => {
+      sendResult(res, err, result);
+  });
+});
+
+app.get('/addressTypes/:addressTypeId', function (req, res) {
+  sj.run( {
+      sqlJson: {
+        sql: `SELECT * FROM address_type WHERE address_type_id = ${req.params.addressTypeId};`,
+        dataPath: '',
+        type: 'object'
+      }
+    }, (err, result) => {
+      sendResult(res, err, result);
+  });
+});
+
+// sql lite info
+
+app.get('/sqlite/tables', function (req, res) {
+  sj.run( {
+      sqlJson: {
+        sql: `SELECT * FROM sqlite_master WHERE type='table';`,
+        dataPath: 'tables'
+      }
+    }, (err, result) => {
+      sendResult(res, err, result);
+  });
+});
+
+app.get('/sqlite/indexes', function (req, res) {
+  sj.run( {
+      sqlJson: {
+        sql: `SELECT * FROM sqlite_master WHERE type='index';`,
+        dataPath: 'tables'
+      }
+    }, (err, result) => {
+      sendResult(res, err, result);
+  });
+});
 
 app.listen(3000, function () {
 
@@ -56,8 +118,15 @@ app.listen(3000, function () {
     afterOpen: () => {
       sj = sqljson(repoSqlite3);
       sj.run(dbLib.databaseCreate, (err, res) => {
-        sj.run(dbLib.indivisualSqlJson, (err, res) => {
-          console.log('Done creating and loading database.');
+        if (err) {
+          console.log(err);
+        }
+        sj.run(dbLib.loadDbSqlJson, (err, res) => {
+          if (err) {
+            console.log(err);
+          } else {
+            console.log('Done creating and loading database.');
+          }
         });
       });
     }
