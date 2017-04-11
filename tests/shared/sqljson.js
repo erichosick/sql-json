@@ -694,7 +694,7 @@ describe("sqljson library", () => {
         sqljson.run(invoiceAccountCreateJsonSql01, (err, res) => {
           expect(err, 'should have no error').to.be.undefined;
           sqljson.run(accountInsertJsonSql01, (err, res) => {
-            // expect(err, 'should have no error because account was the 2nd SQL statement and should have been executed.').to.be.undefined;
+            expect(err, 'should have no error because account was the 2nd SQL statement and should have been executed.').to.be.undefined;
             done();
           });
         });
@@ -702,5 +702,203 @@ describe("sqljson library", () => {
     });
     repoSqlite3.open;
   });
+
+  it(`120: should return a single object when type is 'object' in accounts`, (done) => {
+
+    const accountData01 = JSON.parse(JSON.stringify(accountData)); // tests could be destructive
+
+    const accountSelect =  {
+      sqlJson: {
+        sql: `SELECT * FROM account WHERE account_id = '961fe224-8943-47fb-b08a-92123d9d7211'`,
+        dataPath: 'account',
+        type: 'object'
+      }
+    };
+
+    const repoSqlite3 = sqljsonlib.repoSqlite3({
+      afterOpen: () => {
+        const sqljson = sqljsonlib.sqljson(repoSqlite3);
+
+        sqljson.run(accountTableCreateJsonSql01, (err, res) => {
+          expect(err, 'should have no error').to.be.undefined;
+          sqljson.run(accountInsertJsonSql01, (err, res) => {
+            expect(err, 'should have no error').to.be.undefined;
+            sqljson.run(accountSelect, (err, res) => {
+              expect(err, 'should have no error').to.be.undefined;
+              expect(res, 'should return correct json').to.deep.equal(
+                {
+                  account: {
+                    accountId: '961fe224-8943-47fb-b08a-92123d9d7211',
+                    familyName: 'Lacy',
+                    firstName: 'Candy'
+                  }
+                }
+              );
+              done();
+            });
+          });
+        });
+
+      }
+    });
+    repoSqlite3.open;
+  });
+
+
+  it(`121: should return a single object when type is 'object' in empty dataPath`, (done) => {
+
+    const accountData01 = JSON.parse(JSON.stringify(accountData)); // tests could be destructive
+
+    const accountSelect =  {
+      sqlJson: {
+        sql: `SELECT * FROM account WHERE account_id = '961fe224-8943-47fb-b08a-92123d9d7211'`,
+        dataPath: '',
+        type: 'object'
+      }
+    };
+
+    const repoSqlite3 = sqljsonlib.repoSqlite3({
+      afterOpen: () => {
+        const sqljson = sqljsonlib.sqljson(repoSqlite3);
+
+        sqljson.run(accountTableCreateJsonSql01, (err, res) => {
+          expect(err, 'should have no error').to.be.undefined;
+          sqljson.run(accountInsertJsonSql01, (err, res) => {
+            expect(err, 'should have no error').to.be.undefined;
+            sqljson.run(accountSelect, (err, res) => {
+              expect(err, 'should have no error').to.be.undefined;
+              expect(res, 'should return correct json').to.deep.equal(
+                {
+                  accountId: '961fe224-8943-47fb-b08a-92123d9d7211',
+                  familyName: 'Lacy',
+                  firstName: 'Candy'
+                }
+              );
+              done();
+            });
+          });
+        });
+
+      }
+    });
+    repoSqlite3.open;
+  });
+
+  it(`122: should return a single object when type is 'object' in undefined dataPath`, (done) => {
+
+    const accountData01 = JSON.parse(JSON.stringify(accountData)); // tests could be destructive
+
+    const accountSelect =  {
+      sqlJson: {
+        sql: `SELECT * FROM account WHERE account_id = '961fe224-8943-47fb-b08a-92123d9d7211'`,
+        dataPath: undefined,
+        type: 'object'
+      }
+    };
+
+    const repoSqlite3 = sqljsonlib.repoSqlite3({
+      afterOpen: () => {
+        const sqljson = sqljsonlib.sqljson(repoSqlite3);
+
+        sqljson.run(accountTableCreateJsonSql01, (err, res) => {
+          expect(err, 'should have no error').to.be.undefined;
+          sqljson.run(accountInsertJsonSql01, (err, res) => {
+            expect(err, 'should have no error').to.be.undefined;
+            sqljson.run(accountSelect, (err, res) => {
+              expect(err, 'should have no error').to.be.undefined;
+              expect(res, 'should return correct json').to.deep.equal(
+                {
+                  accountId: '961fe224-8943-47fb-b08a-92123d9d7211',
+                  familyName: 'Lacy',
+                  firstName: 'Candy'
+                }
+              );
+              done();
+            });
+          });
+        });
+
+      }
+    });
+    repoSqlite3.open;
+  });
+
+  it(`123: should return a single object when type is 'object' in null dataPath`, (done) => {
+
+    const accountData01 = JSON.parse(JSON.stringify(accountData)); // tests could be destructive
+
+    const accountSelect =  {
+      sqlJson: {
+        sql: `SELECT * FROM account WHERE account_id = '961fe224-8943-47fb-b08a-92123d9d7211'`,
+        dataPath: null,
+        type: 'object'
+      }
+    };
+
+    const repoSqlite3 = sqljsonlib.repoSqlite3({
+      afterOpen: () => {
+        const sqljson = sqljsonlib.sqljson(repoSqlite3);
+
+        sqljson.run(accountTableCreateJsonSql01, (err, res) => {
+          expect(err, 'should have no error').to.be.undefined;
+          sqljson.run(accountInsertJsonSql01, (err, res) => {
+            expect(err, 'should have no error').to.be.undefined;
+            sqljson.run(accountSelect, (err, res) => {
+              expect(err, 'should have no error').to.be.undefined;
+              expect(res, 'should return correct json').to.deep.equal(
+                {
+                  accountId: '961fe224-8943-47fb-b08a-92123d9d7211',
+                  familyName: 'Lacy',
+                  firstName: 'Candy'
+                }
+              );
+              done();
+            });
+          });
+        });
+
+      }
+    });
+    repoSqlite3.open;
+  });
+
+  it(`124: should return a single object when type is 'object' in non defined dataPath`, (done) => {
+
+    const accountData01 = JSON.parse(JSON.stringify(accountData)); // tests could be destructive
+
+    const accountSelect =  {
+      sqlJson: {
+        sql: `SELECT * FROM account WHERE account_id = '961fe224-8943-47fb-b08a-92123d9d7211'`,
+        type: 'object'
+      }
+    };
+
+    const repoSqlite3 = sqljsonlib.repoSqlite3({
+      afterOpen: () => {
+        const sqljson = sqljsonlib.sqljson(repoSqlite3);
+
+        sqljson.run(accountTableCreateJsonSql01, (err, res) => {
+          expect(err, 'should have no error').to.be.undefined;
+          sqljson.run(accountInsertJsonSql01, (err, res) => {
+            expect(err, 'should have no error').to.be.undefined;
+            sqljson.run(accountSelect, (err, res) => {
+              expect(err, 'should have no error').to.be.undefined;
+              expect(res, 'should return correct json').to.deep.equal(
+                {
+                  accountId: '961fe224-8943-47fb-b08a-92123d9d7211',
+                  familyName: 'Lacy',
+                  firstName: 'Candy'
+                }
+              );
+              done();
+            });
+          });
+        });
+
+      }
+    });
+    repoSqlite3.open;
+  });
+
 
 });

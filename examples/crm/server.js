@@ -42,7 +42,6 @@ app.get('/individuals/:individualId', function (req, res) {
       sqlJson: {
         sql: `SELECT individual_id AS individualId, first_name AS firstName, family_name AS familyName
               FROM individual WHERE individual_id = '${req.params.individualId}';`,
-        dataPath: 'individual',
         type: 'object'
       }
     }, (err, result) => {

@@ -72,7 +72,6 @@ SqlJson.prototype._sqlJsonMergeHierarchy = function(parent, child, join, propNam
         }
       });
     });
-
     return parent;
   }
 }
@@ -164,7 +163,17 @@ SqlJson.prototype._runQuery = function(propContext, callback) {
       break;
     case 'select':
       this.repo.select(propContext.finalSql, (err, rows) => {
-        propContext.result[propContext.propName] = this._camelCase(rows);
+        let sqlJson = propContext.root.sqlJson;
+
+        if (sqlJson && ('object' === sqlJson.type)) {
+          if (('' === sqlJson.dataPath) || (undefined === sqlJson.dataPath)|| (null === sqlJson.dataPath)) {
+            propContext.result = this._camelCase(rows)[0];
+          } else {
+            propContext.result[propContext.propName] = this._camelCase(rows)[0];
+          }
+        } else {
+          propContext.result[propContext.propName] = this._camelCase(rows);
+        }
         callback(err, propContext.result);
       });
       break;
