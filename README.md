@@ -12,7 +12,7 @@ We hope this standard will be implemented in different languages (Java, Javascri
 
 ### What *SqlJson* Isn't!
 
-* *SqlJson* is **not** an ORM (Object Resource Manager)[^1]. It is a data format standard.
+* *SqlJson* is **not** an ORM (Object-Relational Mapper)[^1]. It is a data format standard.
 * *SqlJson*, at this time, does not support transactions.
 * *SqlJson* does not understand models[^2].
 * *SqlJson* does not validate *SQL*. It is a data format standard.

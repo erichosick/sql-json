@@ -12,6 +12,7 @@
     "src/util/header.js",
     "src/sqljson.js",
     "src/repo-sqlite3.js",
+    "src/parse.js",
     "src/util/footer.js"
   ],
   "repository": {
