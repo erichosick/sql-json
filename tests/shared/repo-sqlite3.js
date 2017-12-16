@@ -23,13 +23,13 @@ describe("repo for Sqlite3 library", () => {
       },
       afterClose: () => {
         var repo = repoSqlite3.repository;
-        expect(repo.open, "database should be open").to.be.fase;
+        expect(repo.open, "database should be open").to.be.false;
         done();
       }
 
     });
     var db = repoSqlite3.open;
-    expect(db, "valid repository").to.be.defined;
+    expect(typeof db, "valid repository").to.equal("object");
   });
 
   it("04: should successfully run, insert and select.", (done) => {
