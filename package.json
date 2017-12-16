@@ -1,7 +1,7 @@
 {
   "name": "sqljson",
   "namesub": "library",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Convert results of sql to json. Converts json into a sql statement.",
   "main": "./dist/sqljson.js",
   "scripts": {

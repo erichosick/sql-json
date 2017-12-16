@@ -1,5 +1,5 @@
 // sqljson.js
-// version: 0.0.1
+// version: 0.0.2
 // author: Eric Hosick (erichosick@gmail.com)
 // license: MIT
 (function() {
@@ -7,7 +7,7 @@
 
     let root = this; // window (browser) or exports (server)
     let sqljsonlib = root.sqljsonlib || {}; // merge with previous or new module
-    sqljsonlib["version-library"] = '0.0.1'; // version set through gulp build
+    sqljsonlib["version-library"] = '0.0.2'; // version set through gulp build
 
     // export module for node or the browser
     if (typeof module !== 'undefined' && module.exports) {
